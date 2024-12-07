@@ -21,7 +21,7 @@ function [Tcln, ...
 
 %% Get filtering windows from user input in GUI
 
-            wlmedian = edit_MedianFilter.Value; %#ok<NASGU>
+            wlmedian = edit_MedianFilter.Value;
             wlmean = edit_MeanFilter.Value;
             wldec = edit_DecimateFilter.Value;
 
@@ -40,72 +40,43 @@ function [Tcln, ...
             TrawU      =  datauniquetimes.TRAWU ;
        
             
-%% RAW DATA 
-
-            Tallf1    = Traw;
-            b         = Tallf1<=0; % I changed this variable from a to b so that the variable a above remains the same (bc is used later)-KD
-            Tallf1(b) = NaN; %#ok<NASGU>
+%% RAW DATA CLEANING
+         Tallf1 = Traw;
+         Tallf1(Tallf1 <= 0) = NaN; % Clean invalid data points (<= 0)
 
 %% FILTER DATA 
+            % Despike and smooth the data for each sensor in one step
+            Tallf2 = Tallf1; % Start with the raw data
 
-            % Despike by taking running median
-            % ---------------------------------
-            for i = 1:NoTherm
-                eval(['Tallf2(',int2str(i),',:)=movmedian(Tallf1(',int2str(i),',:),wlmedian);'])
-            end
-            % Smooth by taking running mean
-            % -----------------------------
-            for i = 1:NoTherm
-                eval(['Tallf2(',int2str(i),',:)=rbmmed(Tallf2(',int2str(i),',:),wlmean);'])
-            end
-
-            % Assign median filtered values to matrix Tcln (CLEAN)
-            % -----------------------------------------------------
+            % Apply median filter to each sensor across columns
+            Tallf2 = movmedian(Tallf2, wlmedian, 2); 
+            % Apply mean filter to the data after median filtering
+            Tallf2 = rbmmed(Tallf2, wlmean); 
+            
+            % Assign filtered data to Tcln
             Tcln = Tallf2;
 
-            % Flip time
-            % ----------
-            timeNumU = timeNumU';
-            
-            
 %% DECIMATE DATA
+            n = 1:wldec:length(Traw(1,:)); % Indices for decimation
+            TdecRaw = Traw(:, n); % Decimated raw data
+            Tdec = Tcln(:, n); % Decimated filtered data
+            timeDec = timeNumU(n); % Decimated time
             
-            % DECIMATED RAW DATA
-            % ------------------
-            n=1:wldec:length(Traw(1,:));
-            TdecRaw=Traw(:,n);
-            
-
-            % DECIMATED FILTERED
-            % ------------------
-            % Decimate and assign values to matrix Tdec (DECIMATED)
-            n=1:wldec:length(Tcln(1,:));
-            Tdec=Tcln(:,n);
-
-            % DECIMATED TIME
-            % ---------------
-            timeDec=timeNumU(n);
-        
-  
-%% Finalize            
+%% Finalize
             % Create Record Counter
-            % ---------------------
-            Record       = 1:1:length(timeNumU);
-
-
-            % ASSIGN DECIMATED DATA
-            % ----------------------
-            n          = 1:wldec:length(TrawU);
-            Time_dec   = timeDec;
+            Record = 1:length(timeNumU);
+            
+            % Prepare decimated data
             Record_dec = Record(n);
-            G_dec      = gU(n);
-            Tilt_dec   = tiltU(n);
-            Power_dec  = pwrU(n);
-            Depth_dec  = zU(n);
-    
-            % Save decimated data in structure for access
-            % ---------------------------------------------
-            decimateddata = struct('TDecRaw', TdecRaw, 'TDecFiltered',Tdec, ...
-                'TimeDec', Time_dec, 'RecordDec', Record_dec, 'GDec', G_dec, ...
+            G_dec = gU(n);
+            Tilt_dec = tiltU(n);
+            Power_dec = pwrU(n);
+            Depth_dec = zU(n);
+            
+            % Save decimated data in structure
+            decimateddata = struct('TDecRaw', TdecRaw, 'TDecFiltered', Tdec, ...
+                'TimeDec', timeDec, 'RecordDec', Record_dec, 'GDec', G_dec, ...
                 'TiltDec', Tilt_dec, 'PowerDec', Power_dec, 'DepthDec', Depth_dec);
+            
+end
 

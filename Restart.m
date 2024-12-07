@@ -31,158 +31,118 @@ function [All_Zeros, ...
             label_currentpathfull, ...
             dropdown_Select)
 
- %% RESET CONTROLS
-     H.Error=0;
-     H.Exe_Controls.Delete.Enable='off';
-     H.Plot_Controls.RawPlot.Enable='off';
-     H.Plot_Controls.CleanPlot.Enable='off';
-     H.Plot_Controls.DecimatedPlot.Enable='off';
-     H.Plot_Controls.RawDecimatedPlot.Enable='off';
-     
-     % Initialize Selection Vectors for 22 if No_Thermistors hasn't been
-     % populated yet
 
-      % Initial zeros or NaN
-      NoTherm = 11;
-      All_Zeros = zeros(1,NoTherm);
-      All_NaN = All_Zeros/0;
+%% Constants and Initializations
+    
+    if isempty(H.Fileinfo.No_Thermistors)
+        NoTherm=[];
+    else
+        NoTherm = H.Fileinfo.No_Thermistors.Value; % Get number of thermistors
+    end
+    All_Zeros = zeros(1, NoTherm);
+    All_NaN = nan(1, NoTherm); % Use NaN directly instead of division
+
+%% RESET CONTROLS
+    H.Error=0;
+     H.Exe_Controls.Delete.Enable='off';    
+    controlsToDisable = {'Delete', 'RawPlot', 'CleanPlot', 'DecimatedPlot', 'RawDecimatedPlot'};
+    for control = controlsToDisable
+        H.Plot_Controls.(control{1}).Enable = 'off';
+    end
      
  %% CLEAR AXES 
-     cla(H.Axes.Raw, 'reset');
-     cla(H.Axes.Depth, 'reset');
-     cla(H.Axes.Tilt, 'reset');
-     
-     % Make all axes visible
-     H.Axes.Accel.Visible='off';
-     H.Axes.Tilt.Visible='on';
-     H.Axes.Depth.Visible='on';
-     H.Axes.Raw.Visible='on';   
+    axesFields = {'Raw', 'Depth', 'Tilt', 'Accel'};
+    for field = axesFields
+        cla(H.Axes.(field{1}), 'reset');
+        H.Axes.(field{1}).XLim = datenum([datetime('yesterday') datetime('today')]);
+    end
 
-     x=datetime('yesterday'):minutes(60): datetime('today');
-     y=1/25:1/25: 1;
-
-     plot(H.Axes.Raw,x,y, 'Visible','off')
-     plot(H.Axes.Accel,x,y,'Visible','off')
-     plot(H.Axes.Depth,x,y,'Visible','off')
-     plot(H.Axes.Tilt,x,y,'Visible','off')
-
-     H.Axes.Raw.XLim = [datetime('yesterday') datetime('today')]; 
-     H.Axes.Accel.XLim = [datetime('yesterday') datetime('today')];
-     H.Axes.Tilt.XLim = [datetime('yesterday') datetime('today')];
-     H.Axes.Depth.XLim = [datetime('yesterday') datetime('today')];
+     % Single-time dummy plot for all axes
+    x = datetime('yesterday'):minutes(60):datetime('today');
+    y = linspace(0.04, 1, numel(x));
+    for field = axesFields
+        plot(H.Axes.(field{1}), x, y, 'Visible', 'off');
+    end
 
      AccelPlot = 0;
      TiltPlot = 1;
      DepthPlot = 1;
      
-     % Turn on plot control checkboxes
-     H.PlotCheckboxes.Accel_check.Value=0;
-     H.PlotCheckboxes.Depth_check.Value=1;
-     H.PlotCheckboxes.Tilt_check.Value=1;
-     H.PlotCheckboxes.Raw_check.Value=1;
-     H.PlotCheckboxes.Rawdec_check.Value=1;
-     H.PlotCheckboxes.Filtered_check.Value=0;
-     H.PlotCheckboxes.Filtereddec_check.Value=0;   
+%% RESET CHECKBOXES
+    checkboxFields = {'Accel_check', 'Depth_check', 'Tilt_check', ...
+                      'Raw_check', 'Rawdec_check', 'Filtered_check', ...
+                      'Filtereddec_check'};
+    checkboxValues = [0, 1, 1, 1, 1, 0, 0];
+    for i = 1:numel(checkboxFields)
+        H.PlotCheckboxes.(checkboxFields{i}).Value = checkboxValues(i);
+    end
      
-     % Reset main grid
-     grid_PlotWindow.RowHeight={'0.2x','0.27x','5x','1x','0x','1x','0.2x','0.2x'};   
+    %% RESET MAIN GRID
+    grid_PlotWindow.RowHeight = {'0.2x', '0.27x', '5x', '1x', '0x', '1x', '0.2x', '0.2x'};
 
      % Vertical line begins at x = 0
      enableDefaultInteractivity(H.Axes.Raw);
     
-  %% RESET ALL COMPONENTS 
-         H.Selections_Lines.Raw                   = All_Zeros;
-         H.Selections_Lines.Depth                 = All_Zeros;
-         H.Selections_Lines.Tilt                  = All_Zeros;
-         H.Selections_Lines.Accel                 = All_Zeros;
-         H.Selections_Lines.Raw_Text              = All_Zeros;
-         H.Selections_Lines.Depth_Text            = All_Zeros;
-         H.Selections_Lines.Tilt_Text             = All_Zeros;
-         H.Selections_Lines.Accel_Text            = All_Zeros;   
+%% RESET COMPONENTS
+    selectionsFields = {'Raw', 'Depth', 'Tilt', 'Accel', ...
+                        'Raw_Text', 'Depth_Text', 'Tilt_Text', 'Accel_Text'};
+    for field = selectionsFields
+        H.Selections_Lines.(field{1}) = All_Zeros;
+    end
      
-     % Reset Export/Write Buttons
-         H.Exe_Controls.Export_Penfile.Enable='off';
+    % Reset Export/Write Buttons
+    H.Exe_Controls.Export_Penfile.Enable = 'off';
 
-     % Reset Datafile Information
-         H.Fileinfo.Filename.Value = '';
-         H.Fileinfo.Start_Date.Value='';
-         H.Fileinfo.Start_Time.Value='';
-         H.Fileinfo.End_Time.Value='';
-         H.Fileinfo.Log_Interval.Value='';
-         H.Fileinfo.Pulse_Length.Value='';
-         H.Fileinfo.Pulse_Power.Value='';
-         H.Fileinfo.Decay_Time.Value='';   
+     %% RESET FILE INFORMATION
+    fileInfoFields = {'Filename', 'Start_Date', 'Start_Time', 'End_Time', ...
+                      'Log_Interval', 'Pulse_Length', 'Pulse_Power', 'Decay_Time'};
+    for field = fileInfoFields
+        H.Fileinfo.field{1}.Value = '';
+    end
 
-     % Reset Selection info
-         H.Selections.Select.Enable='on';
-         H.Selections.Value=dropdown_Select.Items(1);
-         H.Selections.Start_Eqm.Value='';
-         H.Selections.End_Eqm.Value='';
-         H.Selections.Start_Pen.Value='';
-         H.Selections.Start_Heat.Value='';
-         H.Selections.End_Pen.Value='';
+     %% RESET SELECTION INFO
+    H.Selections.Select.Enable = 'on';
+    dropdownFirstItem = dropdown_Select.Items{1};
+    H.Selections.Value = dropdownFirstItem;
+    selectionFields = {'Start_Eqm', 'End_Eqm', 'Start_Pen', 'Start_Heat', 'End_Pen'};
+    for field = selectionFields
+        H.Selections.(field{1}).Value = '';
+    end
 
   %% RESET PENETRATION INFORMATION
 
-     % Penetration Info %
-     penetrationInfo = ["", "", "", "", "", "", "", "" ...
-         "", "", ""];
+    penetrationInfo = strings(1, 11);
 
-      pause(2)
-
-      % Initialize array with heat pulse data
-      HeatPulsePens = [];
-      Pulse = checkbox_UseHP.Value;
-      if Pulse == 1
-          PulseData = 1;
-      elseif Pulse == 0
-          PulseData = 0;
-      end
-
+     % HEAT PULSE DATA
+    HeatPulsePens = [];
+    PulseData = checkbox_UseHP.Value;
   
 %% DEFAULT SCREEN
-      % Make main figure full screen %
-      figure_Main.WindowState = 'maximized';
+    figure_Main.WindowState = 'maximized';
       
 
 %% INITIALIZE VECTORS
       
-      % Set Initial NaN conditions %
-      H.S_Selections_Lines.Raw = All_NaN;
-      H.S_Selections_Lines.Depth = All_NaN;
-      H.S_Selections_Lines.Tilt = All_NaN;
-      H.S_Selections_Lines.Raw_Text = All_NaN;
-      H.S_Selections_Lines.Depth_Text = All_NaN;
-      H.S_Selections_Lines.Tilt_Text = All_NaN;
+      %% INITIALIZE VECTORS
+    H.S_Selections_Lines = struct('Raw', All_NaN, 'Depth', All_NaN, ...
+                                  'Tilt', All_NaN, 'Raw_Text', All_NaN, ...
+                                  'Depth_Text', All_NaN, 'Tilt_Text', All_NaN);
+    H.S_Plot_Controls.Legend = All_NaN;
+    H.S_AxLims = struct('AxLims_Raw', All_NaN, 'AxLims_Depth', All_NaN, ...
+                        'AxLims_Tilt', All_NaN, 'AxLims_Acc', All_NaN);
+    selTime_Vector = All_NaN;
 
-      H.S_Plot_Controls.Legend = All_NaN;
+    % Initialize scalar variables
+    [Traw, Tcln, Pitch, Roll, G, Tilt, Time] = deal(0);
+    [H.Error, H.Crop] = deal(0);
+    DataType = 4;
+    Params = {'text'};
 
-      H.S_AxLims.AxLims_Raw   = All_NaN;
-      H.S_AxLims.AxLims_Depth = All_NaN;
-      H.S_AxLims.AxLims_Tilt  = All_NaN;
-      H.S_AxLims.AxLims_Acc   = All_NaN;
+    %% SET CURRENT PATH
+    CurrentPath = pwd;
+    label_currentpathfull.Text = ['...' CurrentPath(end-20:end)];
 
-      selTime_Vector = All_NaN;
-
-      % Set Initial Zero Conditions %
-      Traw = 0;
-      Tcln = 0;
-      Pitch = 0;
-      Roll = 0;
-      G = 0;
-      Tilt = 0;
-      Time = 0;
-      H.Error = 0;
-      H.Crop = 0;
-      DataType = 4;
-
-      % Initial Parameter labels %
-       Params = {'text'}; 
-
-       % Set Current path
-       % -----------------
-       CurrentPath = pwd;
-       label_currentpathfull.Text = ['...' CurrentPath(end-20:end)];
-        
+        H.Axes.Accel.Visible = 'off';
+end
 
          

@@ -6,7 +6,7 @@
 %       01/22/2024 by Kristin Dickerson, UCSC
 %%% =================================================================
 
-function ResetPen(H)
+function ResetPen(H,dropdown_Select)
 
 %% Delete lines on all plots
          delete(H.VerticalLines.Start_Pen_Line);

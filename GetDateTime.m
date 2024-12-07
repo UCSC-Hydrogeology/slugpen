@@ -29,21 +29,29 @@ function [datauniquetimes] ...
             yr=yr+2000;
         end
 
-        timeNum  = datetime(yr,mo,dy,hr,mn,sc); 
-        [~,indU] = unique(timeNum);  
-        timeNumU = timeNum(indU);
-        accxU    = accx(indU);
-        accyU    = accy(indU);
-        acczU    = accz(indU);
-        pwrU     = pwr(indU);
-        tiltU    = Tilt(indU);
-        gU       = G(indU);
-        zU       = z(indU);
-        TrawU    = Traw(:,indU);
-
-
-%% Save unique data in a structure for access
-        datauniquetimes = struct('TIMENUMU', timeNumU, 'ACCxU', accxU, ...
-            'ACCyU', accyU, 'ACCzU', acczU, 'PWRU', pwrU, 'TILTU',...
-            tiltU, 'GU',gU, 'ZU',zU, 'TRAWU',TrawU);
+        %% Create datetime array and find unique entries
+        timeNum = datetime(yr, mo, dy, hr, mn, sc); % Vectorized datetime creation
+        [timeNumU, indU] = unique(timeNum, 'stable'); % Preserve order of unique entries
+        
+        %% Extract unique entries using indices
+        accxU = accx(indU);
+        accyU = accy(indU);
+        acczU = accz(indU);
+        pwrU = pwr(indU);
+        tiltU = Tilt(indU);
+        gU = G(indU);
+        zU = z(indU);
+        TrawU = Traw(:, indU); % Assumes Traw is a 2D matrix
+        
+        %% Save unique data in a structure for access
+        datauniquetimes = struct(...
+            'TIMENUMU', timeNumU, ...
+            'ACCxU', accxU, ...
+            'ACCyU', accyU, ...
+            'ACCzU', acczU, ...
+            'PWRU', pwrU, ...
+            'TILTU', tiltU, ...
+            'GU', gU, ...
+            'ZU', zU, ...
+            'TRAWU', TrawU);
 

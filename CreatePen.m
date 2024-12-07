@@ -287,12 +287,12 @@ function [HeatPulsePens,...
 
             % Save pen, tap, and mat files in the corresponding slugheat
             % input folder
-            cd outputs/
-            filenames = {PenfileName, TapfileName, MatfileName};
-            for i=1:length(filenames)
-                 copyfile(char(filenames(i)),'../../slugheat/inputs')
-            end
-            cd ..
+            %cd outputs/
+            %filenames = {PenfileName, TapfileName, MatfileName};
+            %for i=1:length(filenames)
+            %     copyfile(char(filenames(i)),'../../slugheat/inputs')
+            %end
+            %cd ..
 
             % Tell user if no calibration period was selected
             % ----------------------------------------------
@@ -315,7 +315,7 @@ function [HeatPulsePens,...
                penfile_name '.pen' newline ...
                penfile_name '.tap' newline ...
                penfile_name '.mat' newline newline...
-               'Files saved in in your current path "outputs" subfolder ' pwd '/outputs/ Files also saved in corresponding /slugheat/inputs subfolder.'], ...
+               'Files saved in in your current path "outputs" subfolder ' pwd '/outputs/'], ...
                'Success', 'Icon','success')
 
 
