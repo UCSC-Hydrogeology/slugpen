@@ -182,8 +182,10 @@ function [HeatPulsePens,...
                 % Get penetration number
                 PenNum = str2double(extract(Penetration, digitsPattern));
     
-                if ~isempty(PenNum)
+                if ~isempty(PenNum) && PulsePower ~= 0
                     PenPulsePower = num2str(PulsePower(PenNum));
+                elseif PenNum ~= 0
+                    PenPulsePower = '-999';
                 else
                     definepen=uiconfirm(figure_SetPenInfo, ['Please define ' ...
                         'penetration number.'], ...
